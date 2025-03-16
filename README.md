@@ -1,4 +1,4 @@
-# Pendulum on cart
+# Pendulum On Cart
 
 Using the equations of motion for a non-linear pendulum, the pivot is now anchored to a movable cart.
 

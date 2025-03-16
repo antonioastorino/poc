@@ -1,9 +1,8 @@
 '''
 Author: Antonio Astorino (antonio.astorino.phd@gmail.com)
 
-This simulation implements a non-linear pendulum (based on www.github.com/antonioastorino/nlp) where
-the pivot is now free to move along the horizontal axis. In other words, the pendulum is attached to
-a massless cart.
+This simulation implements a non-linear pendulum (based on https://github.com/antonioastorino/nlp)
+where the pivot is now attached to chart with non-zero mass, sliding on a frictionless plane. 
 '''
 
 import numpy as np
@@ -14,7 +13,9 @@ animation = True
 INITIAL_THETA = np.pi / 4
 DURATION = 6  # s
 l = 2  # m
-m = 1  # kg
+m_pendulum = 2  # kg
+m_cart = 1  # kg
+m_total = m_pendulum + m_cart
 #################################### End of parameters ############################################
 
 dt = 0.001  # s
@@ -50,6 +51,8 @@ x_next = 0
 theta_vec = [0 for _ in range(0, NUM_OF_SAMPLES - 1)]
 omega_vec = [0 for _ in range(0, NUM_OF_SAMPLES - 1)]
 x_vec = [0 for _ in range(0, NUM_OF_SAMPLES - 1)]
+x_cm_vec = [0 for _ in range(0, NUM_OF_SAMPLES - 1)]
+y_cm_vec = [0 for _ in range(0, NUM_OF_SAMPLES - 1)]
 for i in range(0, NUM_OF_SAMPLES - 1):
     theta_next = theta_t_plus_dt(dt, theta_curr, theta_prev)
     x_next = x_t_plus_dt(dt, theta_curr, x_curr, x_prev)
@@ -60,13 +63,15 @@ for i in range(0, NUM_OF_SAMPLES - 1):
     x_prev = x_curr
     x_curr = x_next
     x_vec[i] = x_curr
+    x_cm_vec[i] = (x_curr * m_total + l * np.sin(theta_curr) * m_pendulum) / m_total
+    y_cm_vec[i] = - l * np.cos(theta_curr) * m_pendulum / m_total
 
 myPlotter(t, theta_vec, 't [s]', 'theta [rad]', 'angle vs time')
 
 # Energy / state space
 myPlotter(theta_vec, omega_vec, 'theta', 'omega', 'State Space')
-KE = [(omega_vec[i] * l)**2 * m / 2 for i in range(0, NUM_OF_SAMPLES - 1)]
-U = [m * g * l * (1 - np.cos(theta_vec[i])) for i in range(0, NUM_OF_SAMPLES - 1)]
+KE = [(omega_vec[i] * l)**2 * m_pendulum / 2 for i in range(0, NUM_OF_SAMPLES - 1)]
+U = [m_pendulum * g * l * (1 - np.cos(theta_vec[i])) for i in range(0, NUM_OF_SAMPLES - 1)]
 E = [KE[i] + U[i] for i in range(0, NUM_OF_SAMPLES - 1)]
 myPlotter(KE, U, 'kinetic [J]', 'potential [J]', 'Energy')
 myPlotter(t, E, 'time [s]', 'total energy [J]', 'Energy vs time')
@@ -84,8 +89,8 @@ if (animation):
     refresh_rate = 50  # Hz
     undersampling_rate = round(1 / dt / refresh_rate)
     for i in range(0, NUM_OF_SAMPLES - 1, undersampling_rate):
-        position_plot.set_data([x_vec[i], x_vec[i] + l * np.sin(theta_vec[i])],
-                               [0, - l * np.cos(theta_vec[i])])
+        position_plot.set_data([x_vec[i], x_vec[i] + l * np.sin(theta_vec[i]), x_cm_vec[i]],
+                               [0, - l * np.cos(theta_vec[i]), y_cm_vec[i]])
         plt.pause(1 / refresh_rate)
 
 plt.show()
